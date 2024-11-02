@@ -80,20 +80,28 @@ export function Playground() {
     return (
         <div key={message.id} className={`flex ${message.type === "user_message" ? "justify-end" : "justify-start"} mb-4`}>
           <div className={`max-w-xl p-3 rounded-lg
-          ${message.type === "user_message" ?
-              ("bg-blue-500 text-white") : //Si c'est un utilisateur
+        ${message.type === "user_message" ?
+              ("bg-blue-500 text-white") :
               (isDarkTheme ? "bg-gray-800 text-white" : "bg-gray-200 text-black")}
-            relative`}>
+        relative`}>
             <p>{message.output}</p>
             <small className="absolute bottom-1 right-1 text-xs text-gray-500">{date}</small>
-            <div className="mt-2 flex space-x-2">
-              <button onClick={() => handleReact(message.id, currentReaction === "like" ? null : "like")} aria-label="Like">
-                👍
-              </button>
-              <button onClick={() => handleReact(message.id, currentReaction === "unlike" ? null : "unlike")} aria-label="unlike">
-                👎
-              </button>
-            </div>
+            {message.type === "assistant_message" && ( //&& (isLastMessage || reactions[message.id] === "like" || reactions[message.id] === "unlike")
+                <div className="mt-2 flex space-x-2">
+                      <button
+                          onClick={() => {handleReact(message.id, "like");}}
+                          className={`w-8 h-8 flex items-center justify-center rounded ${currentReaction === "like" ? "bg-green-500 text-white" : "bg-gray-300 text-black"} text-xs`}
+                      >
+                        👍
+                      </button>
+                      <button
+                          onClick={() => {handleReact(message.id, "unlike");}}
+                          className={`w-8 h-8 flex items-center justify-center rounded ${currentReaction === "unlike" ? "bg-red-500 text-white" : "bg-gray-300 text-black"} text-xs`}
+                      >
+                        👎
+                      </button>
+                </div>
+            )}
           </div>
         </div>
     );
