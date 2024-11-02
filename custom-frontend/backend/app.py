@@ -44,6 +44,7 @@ class PromptRequest(BaseModel):
 def create_user(email: str, username: str, password: str, db: Session = Depends(get_db)):
     user_crud = CRUDUser(db)
     user = user_crud.create(email=email, username=username, password=password)
+    print("Je passe par le crud")
     return {"user_id": user.id, "email": user.email, "username": user.username}
 
 
