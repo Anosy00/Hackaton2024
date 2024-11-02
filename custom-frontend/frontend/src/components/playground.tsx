@@ -102,7 +102,7 @@ export function Playground() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col w-4/5">
       <div className="flex-1 overflow-auto p-6">
         <div className="space-y-4">
           {messages.map((msg) => renderMessage(msg))}
