@@ -11,15 +11,19 @@ import boto3
 
 from fastapi import FastAPI, Depends
 
-from models import Session, get_db
-
-from database import CRUDMessage, CRUDConversation, CRUDUser
+from user_routes import user_router
+from message_routes import message_router
+from conversation_routes import conversation_router
 
 load_dotenv()
 
 client = boto3.client("bedrock", region_name="us-east-1")
 
 app = FastAPI()
+
+app.include_router(user_router, prefix="/users", tags=["users"])
+app.include_router(conversation_router, prefix="/conversations", tags=["conversations"])
+app.include_router(message_router, prefix="/messages", tags=["messages"])
 
 app.add_middleware(
     CORSMiddleware,
