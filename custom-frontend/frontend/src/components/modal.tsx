@@ -15,7 +15,22 @@ export const Modal: React.FC<propTypes> = ({ open, onClose, children, title }) =
     const loginCreate = async (email: string, username: string, password: string): Promise<void> => {
         try {
             if (title === "Login") {
-                console.log("Login");
+                const response = await fetch(`http://127.0.0.1/users/connect?username=${username}&password=${password}`, {
+                    method: 'POST',
+                    mode: 'no-cors', // no-cors, *cors, same-origin
+                    headers: {
+                        'Content-Type': 'application/json' // Set appropriate content type
+                    },
+                    body: JSON.stringify({username, password }) // If you're sending a JSON body
+                });
+
+                if (response.status === 200) {
+                    console.log("Connected");
+                    setUser(username);
+                }
+    
+                const data = await response.json(); // Assuming the server responds with JSON
+                console.log(data); // Do something with the response data
                 // Add your login logic here if needed
             } else {
                 const response = await fetch(`http://127.0.0.1/users/?email=${email}&username=${username}&password=${password}`, {
