@@ -1,13 +1,19 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Modal } from "./modal";
+import { __USER__ } from "../global.d";
+
+var user: string;
 
 export function LeftBar() {
     const [openLogin, setOpenLogin] = useState<boolean>(false);
     const [openCreate, setOpenCreate] = useState<boolean>(false);
+
+    
     return (
         <div className="leftbar w-1/5" style={{backgroundColor:'#242624'}}>
             <div className="leftbar__header flex flex-col justify-center">
+                <p className="text-white">Utilisateur connecté : {user}</p>
                 <h2 className="text-xl font-bold text-white">Ex pas triés ChatBot</h2>
                 <div className="flex flex-row flex-around">
                     <Button className="bg-green-500 text-white" onClick={() => setOpenLogin(true)}>Login</Button>
@@ -31,4 +37,8 @@ export function LeftBar() {
             </div>
         </div>
     );
+}
+
+export function setUser(username: string) {
+    user = username;
 }
