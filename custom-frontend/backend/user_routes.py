@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import CRUDUser  # Assure-toi que tu as un fichier database.py avec cette fonction
 from models import get_db
+from fastapi.responses import JSONResponse
 
 user_router = APIRouter()
 
@@ -37,7 +38,7 @@ def connect(username : str, password : str, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    return {"detail": "User connected"}
+    return JSONResponse(content={"message": "Login successful"}, status_code=200)
 
 
 @user_router.get("/{email}")
