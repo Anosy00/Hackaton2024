@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { sessionState, useChatSession } from "@chainlit/react-client";
 import { Playground } from "./components/playground";
 import { useRecoilValue } from "recoil";
+import { LeftBar } from "./components/leftbar";
 
 const userEnv = {};
 
@@ -27,7 +28,8 @@ function App() {
 
   return (
     <>
-      <div>
+      <div className="flex flex-row">
+        <LeftBar />
         <Playground />
       </div>
     </>
