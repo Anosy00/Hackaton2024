@@ -90,13 +90,13 @@ export function Playground() {
                 <div className="mt-2 flex space-x-2">
                       <button
                           onClick={() => {handleReact(message.id, "like");}}
-                          className={`w-8 h-8 flex items-center justify-center rounded ${currentReaction === "like" ? "bg-green-500 text-white" : "bg-gray-300 text-black"} text-xs`}
+                          className={`w-8 h-8 flex items-center justify-center rounded ${currentReaction === "like" ? "bg-green-500 text-white" : (isDarkTheme ? 'bg-gray-900' : 'bg-gray-300 text-black') } text-xs`}
                       >
                         👍
                       </button>
                       <button
                           onClick={() => {handleReact(message.id, "unlike");}}
-                          className={`w-8 h-8 flex items-center justify-center rounded ${currentReaction === "unlike" ? "bg-red-500 text-white" : "bg-gray-300 text-black"} text-xs`}
+                          className={`w-8 h-8 flex items-center justify-center rounded ${currentReaction === "unlike" ? "bg-red-500 text-white" : (isDarkTheme ? 'bg-gray-900' : 'bg-gray-300 text-black') } text-xs`}
                       >
                         👎
                       </button>
