@@ -173,6 +173,14 @@ export function Playground() {
       minute: "2-digit",
     };
     const date = new Date(message.createdAt).toLocaleTimeString(undefined, dateOptions);
+    const currentReaction = reactions[message.id];
+    const handleReact = (messageId: string, reaction: string) => {
+      // Enregistre la nouvelle réaction, ou remet à null si déjà sélectionnée
+      setReactions((prevReactions) => ({
+        ...prevReactions,
+        [messageId]: prevReactions[messageId] === reaction ? null : reaction,
+      }));
+    };
     return (
         <div key={message.id} className="flex items-start space-x-2">
           <div className="w-20 text-sm text-green-500">{message.name}</div>
