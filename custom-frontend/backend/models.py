@@ -1,3 +1,4 @@
+from pydantic import BaseModel
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import sessionmaker, declarative_base
 from datetime import datetime, timezone
@@ -16,7 +17,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True)
     username = Column(String, index=True)
-    password = Column(String, unique=True, index=True)
+    password = Column(String, index=True)
     created_at = Column(DateTime, default=datetime.now(timezone.utc))
 
 class Conversation(Base):
@@ -32,6 +33,18 @@ class Message(Base):
     sender = Column(String)
     message_content = Column(String)
     timestamp = Column(DateTime, default=datetime.now(timezone.utc))
+
+def get_db():
+    db = Session()
+    try:
+        yield db
+    finally:
+        db.close()
+
+class MessageCreate(BaseModel):
+    conversation_id: int
+    sender: str
+    message_content: str
 
 
 # Create tables

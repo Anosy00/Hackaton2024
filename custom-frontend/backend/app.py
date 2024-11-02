@@ -9,18 +9,12 @@ from chainlit.utils import mount_chainlit
 from dotenv import load_dotenv
 import boto3
 
-from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from passlib.context import CryptContext
+from fastapi import FastAPI, Depends
 
-from jwt_auth import get_current_user, authenticate_user, create_access_token
+from models import Session, get_db
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+from database import CRUDMessage, CRUDConversation, CRUDUser
 
-fake_user_username = "testuser"
-fake_user_password_hashed = pwd_context.hash("testpassword")
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 load_dotenv()
 
 client = boto3.client("bedrock", region_name="us-east-1")
@@ -37,39 +31,34 @@ app.add_middleware(
 
 
 @app.get("/custom-auth")
-async def custom_auth(current_user: dict = Depends(get_current_user)):
-    # Génère un token JWT pour l'utilisateur
+async def custom_auth( ):
     token = create_jwt(User(identifier="Test User"))
     return JSONResponse({"token": token})
-
-@app.get("/")
-async def custom_auth(current_user: dict = Depends(get_current_user)):
-    # Génère un token JWT pour l'utilisateur
-    print("current_user")
-    return "current_user"
 
 
 class PromptRequest(BaseModel):
     prompt: str
 
 
-@app.get("/users/me")
-async def read_users_me(current_user: dict = Depends(get_current_user)):
-    print(current_user)
-    return current_user
+@app.post("/users/")
+def create_user(email: str, username: str, password: str, db: Session = Depends(get_db)):
+    user_crud = CRUDUser(db)
+    user = user_crud.create(email=email, username=username, password=password)
+    return {"user_id": user.id, "email": user.email, "username": user.username}
 
 
-@app.post("/token")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = authenticate_user(form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Identifiant ou mot de passe incorrect",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token = create_access_token(data={"sub": user["username"]})
-    return {"access_token": access_token, "token_type": "bearer"}
+@app.post("/conversations/{user_id}")
+def start_conversation(user_id: int, db: Session = Depends(get_db)):
+    conversation_crud = CRUDConversation(db)
+    conversation = conversation_crud.create(user_id=user_id)
+    return {"conversation_id": conversation.conversation_id, "created_at": conversation.created_at}
+
+
+@app.post("/conversations/{conversation_id}/messages")
+def post_message(conversation_id: int, sender: str, message_content: str, db: Session = Depends(get_db)):
+    message_crud = CRUDMessage(db)
+    message = message_crud.add(conversation_id=conversation_id, sender=sender, message_content=message_content)
+    return {"message_id": message.message_id, "timestamp": message.timestamp}
 
 
 mount_chainlit(app=app, target="cl_app.py", path="/chainlit")
