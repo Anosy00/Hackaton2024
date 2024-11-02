@@ -88,12 +88,34 @@ export function Playground() {
             <small className="absolute bottom-1 right-1 text-xs text-gray-500">{date}</small>
             {message.type === "assistant_message" && (
               <div className="mt-2 flex space-x-2">
-                <button onClick={() => handleReact(message.id, currentReaction === "like" ? null : "like")} aria-label="Like">
-                  👍
-                </button>
-                <button onClick={() => handleReact(message.id, currentReaction === "unlike" ? null : "unlike")} aria-label="unlike">
-                  👎
-                </button>
+                {currentReaction !== "unlike" && (
+                    <button
+                        onClick={() => {
+                          if (!currentReaction) {
+                            handleReact(message.id, "like");
+                          }
+                        }}
+                        aria-label="Like"
+                        className={`w-8 h-8 flex items-center justify-center rounded ${currentReaction === "like" ? "bg-green-500 text-white" : "bg-gray-300 text-black"} text-xs`}
+                        disabled={!!currentReaction}
+                    >
+                      👍
+                    </button>
+                )}
+                {currentReaction !== "like" && (
+                    <button
+                        onClick={() => {
+                          if (!currentReaction) {
+                            handleReact(message.id, "unlike");
+                          }
+                        }}
+                        aria-label="Unlike"
+                        className={`w-8 h-8 flex items-center justify-center rounded ${currentReaction === "unlike" ? "bg-red-500 text-white" : "bg-gray-300 text-black"} text-xs`}
+                        disabled={!!currentReaction}
+                    >
+                      👎
+                    </button>
+                )}
               </div>
             )}
           </div>
