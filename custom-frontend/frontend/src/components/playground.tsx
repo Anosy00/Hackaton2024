@@ -86,14 +86,16 @@ export function Playground() {
             relative`}>
             <p>{message.output}</p>
             <small className="absolute bottom-1 right-1 text-xs text-gray-500">{date}</small>
-            <div className="mt-2 flex space-x-2">
-              <button onClick={() => handleReact(message.id, currentReaction === "like" ? null : "like")} aria-label="Like">
-                👍
-              </button>
-              <button onClick={() => handleReact(message.id, currentReaction === "unlike" ? null : "unlike")} aria-label="unlike">
-                👎
-              </button>
-            </div>
+            {message.type === "assistant_message" && (
+              <div className="mt-2 flex space-x-2">
+                <button onClick={() => handleReact(message.id, currentReaction === "like" ? null : "like")} aria-label="Like">
+                  👍
+                </button>
+                <button onClick={() => handleReact(message.id, currentReaction === "unlike" ? null : "unlike")} aria-label="unlike">
+                  👎
+                </button>
+              </div>
+            )}
           </div>
         </div>
     );
