@@ -4,7 +4,7 @@ from langchain.schema import StrOutputParser
 from langchain.schema.runnable import Runnable
 from langchain.schema.runnable.config import RunnableConfig
 from typing import cast
-
+from typing import Optional
 import chainlit as cl
 
 from dotenv import load_dotenv
@@ -41,7 +41,6 @@ async def on_message(message: cl.Message):
         "runnable"))  # type: Runnable
 
     msg = cl.Message(content="")
-
     async for chunk in runnable.astream(
         {"question": message.content},
         config=RunnableConfig(callbacks=[cl.LangchainCallbackHandler()]),
@@ -49,3 +48,14 @@ async def on_message(message: cl.Message):
         await msg.stream_token(chunk)
 
     await msg.send()
+
+@cl.password_auth_callback
+def auth_callback(username: str, password: str):
+    # Fetch the user matching username from your database
+    # and compare the hashed password with the value stored in the database
+    if (username, password) == ("admin", "admin"):
+        return cl.User(
+            identifier="admin", metadata={"role": "admin", "provider": "credentials"}
+        )
+    else:
+        return None
