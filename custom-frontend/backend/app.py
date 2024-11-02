@@ -61,4 +61,12 @@ def post_message(conversation_id: int, sender: str, message_content: str, db: Se
     return {"message_id": message.message_id, "timestamp": message.timestamp}
 
 
+@app.get("/get_user/")
+def get_user(email: str, db: Session = Depends(get_db)):
+    user_crud = CRUDUser(db)
+    user = user_crud.get_by_email(email=email)
+    return {"user_id": user.id, "email": user.email, "username": user.username}
+
+
+
 mount_chainlit(app=app, target="cl_app.py", path="/chainlit")
