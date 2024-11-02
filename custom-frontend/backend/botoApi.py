@@ -1,23 +1,16 @@
 import boto3
 from dotenv import load_dotenv
 import os
-import json
 load_dotenv()
 
-client = boto3.client("bedrock", region_name="us-west-2", aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"), aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"))
+client = boto3.client("bedrock", region_name="us-west-2", aws_access_key_id="ASIAYUGGS4MQOJ3HQLBC", aws_secret_access_key="huf6gqM+0sAOULWQ73gwGQMuiTWnD3eqNCElEwoc")
 
 def invoke_bedrock_model(prompt):
-    client = boto3.client("sagemaker-runtime", region_name="votre_region")
-
-    payload = {
-        "input_text": prompt
-    }
-    
-    response = client.invoke_endpoint(
-        EndpointName="votre_nom_de_point_d_acces_bedrock",
-        ContentType="application/json",
-        Body=json.dumps(payload)
+    response = client.invoke_model(
+        modelId="anthropic.claude-3-sonnet-20240229-v1:0",  # Remplacez par le modèle souhaité
+        contentType="text/plain",
+        accept="application/json",
+        body=prompt.encode("utf-8")
     )
-
-    result = json.loads(response['Body'].read().decode())
-    return result["output_text"]
+    result = response['body'].read().decode('utf-8')
+    return result
