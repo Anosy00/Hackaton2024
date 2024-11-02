@@ -32,7 +32,7 @@ async def on_chat_start():
     runnable = prompt | llm | StrOutputParser()
     cl.user_session.set("runnable", runnable)
 
-    await cl.Message(content="Connected to Chainlit!").send()
+    await cl.Message(content="Salut ! Comment ça va aujourd'hui ?").send()
 
 
 @cl.on_message
