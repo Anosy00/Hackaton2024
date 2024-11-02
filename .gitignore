@@ -4,3 +4,4 @@ custom-frontend/chainlit-backend/.env
 custom-frontend/backend/.venv
 .idea
 custom-frontend/backend/myenv
+/custom-frontend/backend/.env
