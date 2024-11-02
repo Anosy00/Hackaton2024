@@ -18,6 +18,9 @@ class CRUDUser:
     def get_by_email(self, email: str) -> User:
         return self.db.query(User).filter(User.email == email).first()
 
+    def verify_user(self, username: str, password: str) -> User:
+        return self.db.query(User).filter(User.username == username, User.password == password).first()
+
     def delete(self, user_id: int) -> bool:
         user = self.get(user_id)
         if user:

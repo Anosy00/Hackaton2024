@@ -13,13 +13,6 @@ def create_user(email: str, username: str, password: str, db: Session = Depends(
     return {"user_id": user.id, "email": user.email, "username": user.username}
 
 
-@user_router.get("/{email}")
-def get_user(email: str, db: Session = Depends(get_db)):
-    user_crud = CRUDUser(db)
-    user = user_crud.get_by_email(email=email)
-    return {"user_id": user.id, "email": user.email, "username": user.username}
-
-
 @user_router.post("/create_users/")
 def create_user(email: str, username: str, password: str, db: Session = Depends(get_db)):
     user_crud = CRUDUser(db)
@@ -34,3 +27,21 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     if not success:
         raise HTTPException(status_code=404, detail="User not found")
     return {"detail": "User deleted"}
+
+
+@user_router.get("/connect")
+def connect(username : str, password : str, db: Session = Depends(get_db)):
+    user_crud = CRUDUser(db)
+    user = user_crud.verify_user(username=username, password=password)
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {"detail": "User connected"}
+
+
+@user_router.get("/{email}")
+def get_user(email: str, db: Session = Depends(get_db)):
+    user_crud = CRUDUser(db)
+    user = user_crud.get_by_email(email=email)
+    return {"user_id": user.id, "email": user.email, "username": user.username}
