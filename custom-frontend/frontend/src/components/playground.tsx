@@ -13,6 +13,16 @@ export function Playground() {
   const [inputValue, setInputValue] = useState("");
   const { sendMessage } = useChatInteract();
   const { messages } = useChatMessages();
+  const [reactions, setReactions] = useState<{ [key: string]: string | null }>({});
+
+  const handleReact = (messageId: string, reaction: string) => {
+    // Enregistre la nouvelle réaction, ou remet à null si déjà sélectionnée
+    setReactions((prevReactions) => ({
+      ...prevReactions,
+      [messageId]: prevReactions[messageId] === reaction ? null : reaction,
+    }));
+  };
+
 
   const handleSendMessage = () => {
     const content = inputValue.trim();
@@ -36,14 +46,31 @@ export function Playground() {
       undefined,
       dateOptions
     );
+    const currentReaction = reactions[message.id]; // Vérifie la réaction actuelle
     return (
-      <div key={message.id} className="flex items-start space-x-2">
-        <div className="w-20 text-sm text-green-500">{message.name}</div>
-        <div className="flex-1 border rounded-lg p-2">
-          <p className="text-black dark:text-white">{message.output}</p>
-          <small className="text-xs text-gray-500">{date}</small>
+        <div key={message.id} className="flex items-start space-x-2">
+          <div className="w-20 text-sm text-green-500">{message.name}</div>
+          <div className="flex-1 border rounded-lg p-2">
+            <p className="text-black dark:text-white">{message.output}</p>
+            <small className="text-xs text-gray-500">{date}</small>
+            <div className="mt-2 space-x-2">
+              <button
+                  className={`${currentReaction === "like" ? "text-xl" : ""}`}
+                  onClick={() => handleReact(message.id, currentReaction === "like" ? null : "like")}
+                  aria-label="Like"
+              >
+                👍 {/* Emoji Like */}
+              </button>
+              <button
+                  className={`${currentReaction === "unlike" ? "text-xl" : ""}`}
+                  onClick={() => handleReact(message.id, currentReaction === "unlike" ? null : "unlike")}
+                  aria-label="unlike"
+              >
+                👎 {/* Emoji Félicitation */}
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
     );
   };
 
