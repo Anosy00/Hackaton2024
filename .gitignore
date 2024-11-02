@@ -3,3 +3,4 @@ custom-frontend/chainlit-backend/.env
 *.pyc
 custom-frontend/backend/.venv
 .idea
+custom-frontend/backend/myenv
