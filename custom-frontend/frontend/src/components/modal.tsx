@@ -15,32 +15,20 @@ export const Modal: React.FC<propTypes> = ({ open, onClose, children, title }) =
     const loginCreate = async (email: string, username: string, password: string): Promise<void> => {
         try {
             if (title === "Login") {
-                const response = await fetch(`http://127.0.0.1/users/connect?username=${username}&password=${password}`, {
-                    method: 'POST',
-                    mode: 'no-cors', // no-cors, *cors, same-origin
-                    headers: {
-                        'Content-Type': 'application/json' // Set appropriate content type
-                    },
-                    body: JSON.stringify({username, password }) // If you're sending a JSON body
-                });
+                const response = await fetch(`http://127.0.0.1/users/connect?username=${username}&password=${password}`);
 
+                console.log(response.status + "Status");    
                 if (response.status === 200) {
                     console.log("Connected");
                     setUser(username);
                 }
+                else {setUser("Non connecté");}
     
                 const data = await response.json(); // Assuming the server responds with JSON
                 console.log(data); // Do something with the response data
                 // Add your login logic here if needed
             } else {
-                const response = await fetch(`http://127.0.0.1/users/?email=${email}&username=${username}&password=${password}`, {
-                    method: 'POST',
-                    mode: 'no-cors', // no-cors, *cors, same-origin
-                    headers: {
-                        'Content-Type': 'application/json' // Set appropriate content type
-                    },
-                    body: JSON.stringify({ email, username, password }) // If you're sending a JSON body
-                });
+                const response = await fetch(`http://127.0.0.1/users/?email=${email}&username=${username}&password=${password}`);
     
                 const data = await response.json(); // Assuming the server responds with JSON
                 console.log(data); // Do something with the response data
@@ -82,7 +70,10 @@ export const Modal: React.FC<propTypes> = ({ open, onClose, children, title }) =
                     <button className='bg-blue-500 text-white rounded-lg p-2 flex-1' onClick={() => {
                         console.log(email + " EMAILLLL");
                         loginCreate(email, username, password);
-                        setUser(username);
+                        if (title === "Create"){
+                            setUser(username);
+                        }
+                        
                         onClose();
                     }}>{title}</button>
                 </div>

@@ -37,7 +37,6 @@ def connect(username : str, password : str, db: Session = Depends(get_db)):
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
     return JSONResponse(content={"message": "Login successful"}, status_code=200)
 
 
