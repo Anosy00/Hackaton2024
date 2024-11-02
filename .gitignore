@@ -3,3 +3,5 @@ custom-frontend/chainlit-backend/.env
 *.pyc
 custom-frontend/backend/.venv
 .idea
+
+test_database.db
