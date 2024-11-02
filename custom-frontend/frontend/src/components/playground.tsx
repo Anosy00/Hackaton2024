@@ -69,6 +69,7 @@ export function Playground() {
     };
     const date = new Date(message.createdAt).toLocaleTimeString(undefined, dateOptions);
     const currentReaction = reactions[message.id];
+    const isLastMessage = messages[messages.length - 1]?.id === message.id;
 
     const handleReact = (messageId: string, reaction: string) => {
       setReactions((prevReactions) => ({
@@ -80,43 +81,43 @@ export function Playground() {
     return (
         <div key={message.id} className={`flex ${message.type === "user_message" ? "justify-end" : "justify-start"} mb-4`}>
           <div className={`max-w-xl p-3 rounded-lg
-          ${message.type === "user_message" ?
-              ("bg-blue-500 text-white") : //Si c'est un utilisateur
+        ${message.type === "user_message" ?
+              ("bg-blue-500 text-white") :
               (isDarkTheme ? "bg-gray-800 text-white" : "bg-gray-200 text-black")}
-            relative`}>
+        relative`}>
             <p>{message.output}</p>
             <small className="absolute bottom-1 right-1 text-xs text-gray-500">{date}</small>
-            {message.type === "assistant_message" && (
-              <div className="mt-2 flex space-x-2">
-                {currentReaction !== "unlike" && (
-                    <button
-                        onClick={() => {
-                          if (!currentReaction) {
-                            handleReact(message.id, "like");
-                          }
-                        }}
-                        aria-label="Like"
-                        className={`w-8 h-8 flex items-center justify-center rounded ${currentReaction === "like" ? "bg-green-500 text-white" : "bg-gray-300 text-black"} text-xs`}
-                        disabled={!!currentReaction}
-                    >
-                      👍
-                    </button>
-                )}
-                {currentReaction !== "like" && (
-                    <button
-                        onClick={() => {
-                          if (!currentReaction) {
-                            handleReact(message.id, "unlike");
-                          }
-                        }}
-                        aria-label="Unlike"
-                        className={`w-8 h-8 flex items-center justify-center rounded ${currentReaction === "unlike" ? "bg-red-500 text-white" : "bg-gray-300 text-black"} text-xs`}
-                        disabled={!!currentReaction}
-                    >
-                      👎
-                    </button>
-                )}
-              </div>
+            {message.type === "assistant_message" && (isLastMessage || reactions[message.id] === "like" || reactions[message.id] === "unlike") && (
+                <div className="mt-2 flex space-x-2">
+                  {currentReaction !== "unlike" && (
+                      <button
+                          onClick={() => {
+                            if (!currentReaction) {
+                              handleReact(message.id, "like");
+                            }
+                          }}
+                          aria-label="Like"
+                          className={`w-8 h-8 flex items-center justify-center rounded ${currentReaction === "like" ? "bg-green-500 text-white" : "bg-gray-300 text-black"} text-xs`}
+                          disabled={!!currentReaction}
+                      >
+                        👍
+                      </button>
+                  )}
+                  {currentReaction !== "like" && (
+                      <button
+                          onClick={() => {
+                            if (!currentReaction) {
+                              handleReact(message.id, "unlike");
+                            }
+                          }}
+                          aria-label="unlike"
+                          className={`w-8 h-8 flex items-center justify-center rounded ${currentReaction === "unlike" ? "bg-red-500 text-white" : "bg-gray-300 text-black"} text-xs`}
+                          disabled={!!currentReaction}
+                      >
+                        👎
+                      </button>
+                  )}
+                </div>
             )}
           </div>
         </div>
