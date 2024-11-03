@@ -40,7 +40,7 @@ export const Modal: React.FC<propTypes> = ({ open, onClose, children, title }) =
     
 
     return (
-        <div className={`fixed inset-0 flex justify-center items-center transition-colors ${open ? "visible bg-black/20" : "invisible"}`}>
+        <div className={`fixed inset-0 flex justify-center z-1 items-center transition-colors ${open ? "visible bg-black/20" : "invisible"}`}>
             <div className='w-1/4 bg-white rounded-3xl flex flex-col justify-center items-center p-4'>
                 <h1 className='font-bold mb-4'>{title}</h1>
                 <input
