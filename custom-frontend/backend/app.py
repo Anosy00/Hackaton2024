@@ -19,7 +19,7 @@ from cl_app import process_file
 
 load_dotenv()
 
-client = boto3.client("bedrock", region_name="us-east-1")
+client = boto3.client("bedrock", region_name="us-west-2")
 
 app = FastAPI()
 
