@@ -20,8 +20,11 @@ export function Playground() {
   const { sendMessage } = useChatInteract();
   const { messages } = useChatMessages();
   const [reactions, setReactions] = useState<{ [key: string]: string | null }>({});
+  
+  // Variable pour stocker le nom du fichier sélectionné
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
 
-  //varialbe deffielement pour le scroll
+  // Variable de défilement
   const messagesEndRef = useRef<HTMLDivElement>(null); 
 
   // Variable d'état pour le thème
@@ -65,6 +68,31 @@ export function Playground() {
     }
   };
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setSelectedFileName(file.name); // Met à jour le nom du fichier sélectionné
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch("http://localhost:8000/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (response.ok) {
+        console.log("Fichier téléchargé et indexé avec succès");
+      } else {
+        console.error("Erreur lors du téléchargement du fichier:", await response.json());
+      }
+    } catch (error) {
+      console.error("Erreur lors du téléchargement du fichier:", error);
+    }
+  };
+
   const renderMessage = (message: IStep) => {
     const dateOptions: Intl.DateTimeFormatOptions = {
       hour: "2-digit",
@@ -83,23 +111,21 @@ export function Playground() {
     return (
         <div key={message.id} className={`flex ${message.type === "user_message" ? "justify-end" : "justify-start"} mb-4`}>
           <div className={`max-w-xl p-3 rounded-lg
-        ${message.type === "user_message" ?
-              ("bg-blue-500 text-white") :
-              (isDarkTheme ? "bg-gray-800 text-white" : "bg-gray-200 text-black")}
+        ${message.type === "user_message" ? "bg-blue-500 text-white" : (isDarkTheme ? "bg-gray-800 text-white" : "bg-gray-200 text-black")}
         relative`}>
             <p>{message.output}</p>
             <small className="absolute bottom-1 right-1 text-xs text-gray-500">{date}</small>
-            {message.type === "assistant_message" && ( //&& (isLastMessage || reactions[message.id] === "like" || reactions[message.id] === "unlike")
+            {message.type === "assistant_message" && (
                 <div className="mt-2 flex space-x-2">
                       <button
                           onClick={() => {handleReact(message.id, "like");}}
-                          className={`w-8 h-8 flex items-center justify-center rounded ${currentReaction === "like" ? "bg-green-500 text-white" : (isDarkTheme ? 'bg-gray-900' : 'bg-gray-300 text-black') } text-xs`}
+                          className={`w-8 h-8 flex items-center justify-center rounded ${currentReaction === "like" ? "bg-green-500 text-white" : (isDarkTheme ? 'bg-gray-900' : 'bg-gray-300 text-black')} text-xs`}
                       >
                         👍
                       </button>
                       <button
                           onClick={() => {handleReact(message.id, "unlike");}}
-                          className={`w-8 h-8 flex items-center justify-center rounded ${currentReaction === "unlike" ? "bg-red-500 text-white" : (isDarkTheme ? 'bg-gray-900' : 'bg-gray-300 text-black') } text-xs`}
+                          className={`w-8 h-8 flex items-center justify-center rounded ${currentReaction === "unlike" ? "bg-red-500 text-white" : (isDarkTheme ? 'bg-gray-900' : 'bg-gray-300 text-black')} text-xs`}
                       >
                         👎
                       </button>
@@ -111,7 +137,7 @@ export function Playground() {
   };
 
   useEffect(() => {
-    if  (messagesEndRef.current) {
+    if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
@@ -119,7 +145,7 @@ export function Playground() {
   return (
       <div className={`min-h-screen ${isDarkTheme ? 'bg-gray-900' : 'bg-white'} flex flex-col transition-colors duration-300 w-4/5`}>
         <div className="flex-1 overflow-auto p-6">
-          <div className="h-[400px] overflow-auto p-6" >
+          <div className="h-[400px] overflow-auto p-6">
             <div className="space-y-4">
               {messages.map((msg) => renderMessage(msg))}
               <div ref={messagesEndRef} />
@@ -145,11 +171,20 @@ export function Playground() {
             <Button onClick={() => setIsDarkTheme(!isDarkTheme)}>
               {isDarkTheme ? 'Light Mode' : 'Dark Mode'}
             </Button>
+
+            {/* Input pour le fichier */}
+            <input
+              type="file"
+              accept=".pdf,.txt,.docx"
+              onChange={handleFileUpload}
+              className="hidden" // Masque le champ de fichier
+              id="file-upload"
+            />
+            <label htmlFor="file-upload" className="cursor-pointer">
+              <input type="file" accept=".pdf,.txt,.docx" onChange={handleFileUpload}/>
+            </label>
           </div>
         </div>
       </div>
   );
 }
-
-
-
