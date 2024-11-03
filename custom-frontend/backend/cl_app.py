@@ -35,7 +35,8 @@ def initialize_vectorstore():
     pdf_files = [
         "pdf/R-1203-fr.pdf",
         "pdf/e_spirometrie_2017_VF.pdf",
-        "pdf/BreatheEasy-Diagnosis_optimized_FR.pdf"
+        "pdf/BreatheEasy-Diagnosis_optimized_FR.pdf",
+        "pdf/plan.pdf",
     ]
     
     all_docs = []
