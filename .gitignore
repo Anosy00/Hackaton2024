@@ -5,5 +5,5 @@ custom-frontend/backend/.venv
 .idea
 custom-frontend/backend/myenv
 /custom-frontend/backend/.env
-
+.env
 test_database.db
