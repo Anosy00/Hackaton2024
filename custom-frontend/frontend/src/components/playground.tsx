@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useChatInteract, useChatMessages, IStep } from "@chainlit/react-client";
 
 interface Response {
@@ -20,6 +20,9 @@ export function Playground() {
   const { sendMessage } = useChatInteract();
   const { messages } = useChatMessages();
   const [reactions, setReactions] = useState<{ [key: string]: string | null }>({});
+
+  //varialbe deffielement pour le scroll
+  const messagesEndRef = useRef<HTMLDivElement>(null); 
 
   // Variable d'état pour le thème
   const [isDarkTheme, setIsDarkTheme] = useState<boolean>(true);
@@ -107,11 +110,20 @@ export function Playground() {
     );
   };
 
+  useEffect(() => {
+    if  (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
   return (
       <div className={`min-h-screen ${isDarkTheme ? 'bg-gray-900' : 'bg-white'} flex flex-col transition-colors duration-300 w-4/5`}>
         <div className="flex-1 overflow-auto p-6">
-          <div className="space-y-4">
-            {messages.map((msg) => renderMessage(msg))}
+          <div className="h-[400px] overflow-auto p-6" >
+            <div className="space-y-4">
+              {messages.map((msg) => renderMessage(msg))}
+              <div ref={messagesEndRef} />
+            </div>
           </div>
         </div>
         <div className={`border-0 p-4 ${isDarkTheme ? 'bg-gray-800' : 'bg-gray-200'}`}>
@@ -138,3 +150,6 @@ export function Playground() {
       </div>
   );
 }
+
+
+
