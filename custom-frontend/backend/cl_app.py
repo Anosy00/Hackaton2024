@@ -199,25 +199,27 @@ def auth_callback(username: str, password: str):
         )
     else:
         return None
+    
+from fastapi import UploadFile, File
 
-def process_file(filepath):
+def process_file(fileName, content:str):
     """Détermine le type de fichier et le traite en conséquence."""
-    file_extension = os.path.splitext(filepath)[1].lower()
-
+    file_extension = os.path.splitext(fileName)[1].lower()
+    fileName = os.path.splitext(fileName)[0] + file_extension
     if file_extension in ['.txt', '.pdf', '.docx', '.csv']:
-        return handle_document(filepath)
+        return handle_document(content)
     elif file_extension in ['.png', '.jpg', '.jpeg', '.gif']:
-        return handle_image(filepath)
+        return handle_image(content)
     elif file_extension in ['.mp3', '.wav', '.ogg']:
-        return handle_audio(filepath)
+        return handle_audio(content)
     else:
         return "Type de fichier non supporté."
 
-def handle_document(filepath):
+def handle_document(contentFile):
     """Logique pour traiter les documents."""
-    with open(filepath, 'r') as f:
-        content = f.read()
-    return f"Document traité avec succès. Contenu extrait : {content[:100]}..."  # Retourner les 100 premiers caractères
+   
+    content = contentFile
+    return f"Document traité avec succès. Contenu extrait : {content}..."  # Retourner les 100 premiers caractères
 
 def handle_image(filepath):
     """Logique pour traiter les images."""

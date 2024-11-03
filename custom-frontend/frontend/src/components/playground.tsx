@@ -18,6 +18,7 @@ interface Message {
 async function uploadFiles() {
     const form = document.getElementById("uploadForm") as HTMLFormElement;
     const formData = new FormData(form);
+    
 
     const response = await fetch("http://localhost:8000/upload", {
         method: "POST",

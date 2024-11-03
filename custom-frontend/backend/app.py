@@ -1,3 +1,4 @@
+import os
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from starlette.middleware.cors import CORSMiddleware
@@ -45,8 +46,8 @@ async def upload_files(files: list[UploadFile]):
 
     responses = []
     for file in files:
-        content = await file.read()
-        response = process_file(content, file.filename)  # Utilise la fonction pour traiter le fichier
+        filePath = os.path.abspath(file.filename)
+        response = process_file(file.filename, file.read())  # Utilise la fonction pour traiter le fichier
         responses.append({"file": file.filename, "response": response})
 
     return JSONResponse(responses)
