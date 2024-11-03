@@ -41,11 +41,16 @@ class CRUDConversation:
     def get(self, conversation_id: int) -> Conversation:
         return self.db.query(Conversation).filter(Conversation.conversation_id == conversation_id).first()
 
+    def get_id(self) -> Conversation:
+        conversation = self.db.query(Conversation).filter(Conversation.conversation_id == conversation_id).first()
+        return conversation.conversation_id
+
+
     def get_all_by_user(self, user_id: int):
         return self.db.query(Conversation).filter(Conversation.user_id == user_id).all()
     
     def get_all_messages(self, conversation_id: int):
-        return self.db.query(Message).filter(Conversation.conversation_id == Message.conversation_id)
+        return self.db.query(Message).filter(conversation_id == Message.conversation_id)
     
 class CRUDMessage:
     def __init__(self, db_session: Session):

@@ -13,12 +13,19 @@ def start_conversation(user_id: int, db: Session = Depends(get_db)):
     conversation = conversation_crud.create(user_id=user_id)
     return {"conversation_id": conversation.conversation_id, "created_at": conversation.created_at}
 
+@conversation_router.get("/conversation_id")
+def get_conversation_id(user_id: int, db: Session = Depends(get_db)):
+    conversation_crud = CRUDConversation(db)
+    conversation = conversation_crud.create(user_id=user_id)
+    return {"conversation_id": conversation.conversation_id, "created_at": conversation.created_at}
+
+
 
 @conversation_router.get("/get_conversation/{conversation_id}")
 def get_conversation(conversation_id: int, user_id: int , db: Session = Depends(get_db)):
     conversation_crud = CRUDConversation(db)
     conversation = conversation_crud.get(user_id=user_id)
-    messages = conversation_crud.get_all_messages(conversation=conversation_id)
+    messages = conversation_crud.get_all_messages(conversation_id)
     conversation_history = [{"is_bot": msg.is_bot, "content": msg.content} for msg in messages]
 
     # load into LangChain memory for context

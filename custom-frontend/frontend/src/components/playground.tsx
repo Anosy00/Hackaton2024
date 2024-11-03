@@ -20,6 +20,8 @@ export function Playground() {
   const { sendMessage } = useChatInteract();
   const { messages } = useChatMessages();
   const [reactions, setReactions] = useState<{ [key: string]: string | null }>({});
+  const [currentConversationId, setCurrentConversationId] = useState<number>();
+  
 
   // Variable d'état pour le thème
   const [isDarkTheme, setIsDarkTheme] = useState<boolean>(true);
@@ -49,7 +51,7 @@ export function Playground() {
     }
   };
 
-  const handleSendMessage = (user: string) => {
+  const handleSendMessage = async (user: string) => {
     const content = inputValue.trim();
     if (content) {
       const userMessage: Message = {
@@ -59,6 +61,26 @@ export function Playground() {
       };
       sendMessage(userMessage, []);
       setInputValue("");
+    }
+    try {
+      const response = await fetch("http:127.0.0.1/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content: inputValue }),
+      });
+
+      const data: Response = await response.json();
+      const botMessage: Message = {
+        name: "Bot",
+        type: "assistant_message",
+        output: data.content,
+      };
+      sendMessage(botMessage, []);
+      setInputValue("");
+    } catch (error) {
+      console.error("Erreur lors de l'envoi du message:", error);
     }
   };
 

@@ -22,7 +22,7 @@ class User(Base):
 
 class Conversation(Base):
     __tablename__ = "conversations"
-    conversation_id = Column(Integer, primary_key=True, index=True)
+    conversation_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.now(timezone.utc))
 
