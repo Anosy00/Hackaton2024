@@ -29,16 +29,26 @@ load_dotenv()
 
 # Chargement des documents web et indexation avec embeddings
 def initialize_vectorstore():
-    # Charger le PDF avec PDFLoader
-    loader = PDFLoader(file_path="pdf\\R-1203-fr.pdf")  # Indiquez le chemin de votre fichier PDF
-    docs = loader.load()
+    # Liste des chemins des fichiers PDF
+    pdf_files = [
+        "pdf/R-1203-fr.pdf",  # Indiquez le chemin de votre fichier PDF
+        "pdf/e_spirometrie_2017_VF.pdf",  # Ajoutez d'autres fichiers PDF ici
+        "pdf/BreatheEasy-Diagnosis_optimized_FR.pdf"
+    ]
+    
+    all_docs = []  # Pour stocker tous les documents chargés
+
+    for file_path in pdf_files:
+        loader = PDFLoader(file_path=file_path)
+        docs = loader.load()
+        all_docs.extend(docs)  # Ajouter les documents chargés à la liste
 
     # Diviser les documents en morceaux gérables
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-    splits = text_splitter.split_documents(docs)
+    splits = text_splitter.split_documents(all_docs)
 
     # Initialiser le modèle SentenceTransformer
-    model_name = "all-MiniLM-L6-v2"  # Exemple de modèle Sentence Transformer
+    model_name = "all-MiniLM-L6-v2"
     model = SentenceTransformer(model_name)
 
     class CustomEmbedding:
@@ -51,16 +61,16 @@ def initialize_vectorstore():
         def embed_query(self, query) -> list[float]:
             print(f"Requête à encoder : '{query}'")  # Débogage
             if isinstance(query, dict):
-                query = query.get('question', '')  # Récupère la question du dict
-            if not query or not query.strip():  # Vérifie si la requête est vide
-                raise ValueError("La requête est vide ou invalide.")  # Gestion d'erreur
+                query = query.get('question', '')
+            if not query or not query.strip():
+                raise ValueError("La requête est vide ou invalide.")
             return model.encode(query, convert_to_numpy=True).tolist()
 
     embedding_function = CustomEmbedding()
 
     # Extraire le texte et créer les embeddings
-    texts = [doc.page_content for doc in splits if getattr(doc, 'page_content', '').strip()]  # Filtrer les documents vides
-    if not texts:  # Vérifie si nous avons des textes valides
+    texts = [doc.page_content for doc in splits if getattr(doc, 'page_content', '').strip()]
+    if not texts:
         raise ValueError("Aucun texte valide à indexer dans le vectorstore.")
 
     embeddings = embedding_function.embed(texts)
@@ -71,6 +81,7 @@ def initialize_vectorstore():
         embedding=embedding_function
     )
     return vectorstore
+
 
 
 vectorstore = initialize_vectorstore()
