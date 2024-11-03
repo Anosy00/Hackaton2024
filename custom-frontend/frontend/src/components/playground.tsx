@@ -63,6 +63,9 @@ export function Playground() {
         type: "user_message",
         output: content,
       };
+      if (content === "rick roll"){
+        window.location.href = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+      }
       sendMessage(userMessage, []);
       setInputValue("");
     }
