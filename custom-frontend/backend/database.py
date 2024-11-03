@@ -18,13 +18,14 @@ class CRUDUser:
     def get_by_email(self, email: str) -> User:
         return self.db.query(User).filter(User.email == email).first()
 
-    def delete(self, user_id: int) -> bool:
+    def delete(self, user_id: int) -> None:
         user = self.get(user_id)
         if user:
             self.db.delete(user)
             self.db.commit()
-            return True
-        return False
+
+    def get_all_conversations(self, user_id: int):
+        return self.db.query(User).filter(Conversation.user_id == Conversation.user_id)
 
 class CRUDConversation:
     def __init__(self, db_session: Session):
@@ -42,7 +43,10 @@ class CRUDConversation:
 
     def get_all_by_user(self, user_id: int):
         return self.db.query(Conversation).filter(Conversation.user_id == user_id).all()
-
+    
+    def get_all_messages(self, conversation_id: int):
+        return self.db.query(Message).filter(Conversation.conversation_id == Message.conversation_id)
+    
 class CRUDMessage:
     def __init__(self, db_session: Session):
         self.db = db_session
@@ -56,5 +60,3 @@ class CRUDMessage:
 
     def get_all_by_conversation(self, conversation_id: int):
         return self.db.query(Message).filter(Message.conversation_id == conversation_id).all()
-
-

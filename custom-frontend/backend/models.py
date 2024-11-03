@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Boolean, create_engine, Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import sessionmaker, declarative_base
 from datetime import datetime, timezone
 
@@ -30,7 +30,7 @@ class Message(Base):
     __tablename__ = "messages"
     message_id = Column(Integer, primary_key=True, index=True)
     conversation_id = Column(Integer, ForeignKey("conversations.conversation_id"))
-    sender = Column(String)
+    is_bot = Column(Boolean)
     message_content = Column(String)
     timestamp = Column(DateTime, default=datetime.now(timezone.utc))
 

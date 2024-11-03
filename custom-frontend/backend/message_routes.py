@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from database import CRUDMessage
 from models import get_db
+from memory_management import memory
 
 message_router = APIRouter()
 
