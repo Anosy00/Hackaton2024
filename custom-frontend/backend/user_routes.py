@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from database import CRUDUser  # Assure-toi que tu as un fichier database.py avec cette fonction
+from database import CRUDUser
 from models import get_db
 
 user_router = APIRouter()
@@ -34,3 +34,10 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     if not success:
         raise HTTPException(status_code=404, detail="User not found")
     return {"detail": "User deleted"}
+
+
+@user_router.get("/get_conversations/{user_id}")
+def get_conversations(user_id: int, db: Session = Depends(get_db)):
+    user_crud = CRUDUser(db)
+    conversations = user_crud.get_all_conversations(user_id=user_id)
+    conversations_history = [{"conversation_id": conv.conversation_id, "created_at": conv.created_at} for conv in conversations]
