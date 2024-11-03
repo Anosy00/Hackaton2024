@@ -23,6 +23,7 @@ from langchain.document_loaders import PyMuPDFLoader as PDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
 from sentence_transformers import SentenceTransformer
+import urllib
 
 # Chargement des variables d'environnement
 load_dotenv()
@@ -126,7 +127,7 @@ async def on_chat_start():
         ).send()
     # Stockage de la chaîne RAG dans la session utilisateur
     cl.user_session.set("rag_chain", rag_chain)
-    await cl.Message(content="Connected to Chainlit with RAG setup using Transformers Embeddings!").send()
+    await cl.Message(content="Salut ! Comment je peux t'aider aujourd'hui ?").send()
 
     text_file = files[0]
 
@@ -140,91 +141,48 @@ async def on_chat_start():
 
 @cl.on_message
 async def on_message(message: cl.Message):
-    if not message.content or not message.content.strip():  # Vérifie si le message n'est pas vide
-        await cl.Message(content="La requête ne peut pas être vide.").send()
-        return
-    """Gère les messages reçus de l'utilisateur."""
-    runnable = cast(Runnable, cl.user_session.get("runnable"))
-
-    # Récupération de la chaîne RAG depuis la session utilisateur
+    # Récupération de la chaîne RAG
     rag_chain = cast(Runnable, cl.user_session.get("rag_chain"))
-    msg = cl.Message(content="")
 
-    # Liste de mots-clés pertinents pour les documents
-    keywords = ["spirométrie", "diagnostic", "respiration", "santé", "asthme"]  # Ajustez cette liste selon le contenu de vos documents
+    # Vérification pour savoir si c’est un "rick roll"
+    if message.content.lower() == "rick roll":
+        elements = [cl.Video(name="rickroll.mp4", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ", display="inline")]
+        await cl.Message(content="RICK ROLLED", elements=elements).send()
+        return
 
-    # Vérification de la pertinence de la question
+    # Pour les autres messages
+    keywords = ["spirométrie", "diagnostic", "respiration", "santé", "asthme"]
     if any(keyword in message.content.lower() for keyword in keywords):
-        # Utilisation du retriever pour obtenir les documents pertinents
         retrieved_docs = retriever.get_relevant_documents(message.content)
-
-        if retrieved_docs:  # Si des documents sont trouvés
+        if retrieved_docs:
             context = format_docs(retrieved_docs)
             input_data = {"context": context, "question": message.content}
-            
-            # Génération de la réponse en utilisant le flux asynchrone
-            async for chunk in rag_chain.astream(
-                input_data,
-                config=RunnableConfig(callbacks=[cl.LangchainCallbackHandler()]),
-            ):
+            msg = cl.Message(content="")  # Message prêt pour le streaming
+            async for chunk in rag_chain.astream(input_data, config=RunnableConfig(callbacks=[cl.LangchainCallbackHandler()])):
                 await msg.stream_token(chunk)
+            await msg.send()  # Envoie une fois la réponse complète
         else:
-            # Si aucun document n'est trouvé, répondre avec ses propres connaissances
-            response = rag_chain.astream(
-                {"question": f"Répondez à cette question avec vos propres connaissances : {message.content}"},
-                config=RunnableConfig(callbacks=[cl.LangchainCallbackHandler()]),
-            )
-            async for chunk in response:
-                await msg.stream_token(chunk)
+            await cl.Message(content="Aucun document pertinent trouvé. Réponse basée sur le modèle...").send()
     else:
-        # Question non pertinente, réponse avec ses propres connaissances
         response = rag_chain.astream(
             {"question": f"Répondez à cette question avec vos propres connaissances : {message.content}"},
             config=RunnableConfig(callbacks=[cl.LangchainCallbackHandler()]),
         )
+        msg = cl.Message(content="")  # Message pour le streaming
         async for chunk in response:
             await msg.stream_token(chunk)
 
-    await msg.send()
 
 
 
 
 @cl.password_auth_callback
 def auth_callback(username: str, password: str):
-    """Gère l'authentification par mot de passe."""
+    # Fetch the user matching username from your database
+    # and compare the hashed password with the value stored in the database
     if (username, password) == ("admin", "admin"):
         return cl.User(
             identifier="admin", metadata={"role": "admin", "provider": "credentials"}
         )
     else:
         return None
-    
-from fastapi import UploadFile, File
-
-def process_file(fileName, content:str):
-    """Détermine le type de fichier et le traite en conséquence."""
-    file_extension = os.path.splitext(fileName)[1].lower()
-    fileName = os.path.splitext(fileName)[0] + file_extension
-    if file_extension in ['.txt', '.pdf', '.docx', '.csv']:
-        return handle_document(content)
-    elif file_extension in ['.png', '.jpg', '.jpeg', '.gif']:
-        return handle_image(content)
-    elif file_extension in ['.mp3', '.wav', '.ogg']:
-        return handle_audio(content)
-    else:
-        return "Type de fichier non supporté."
-
-def handle_document(contentFile):
-    """Logique pour traiter les documents."""
-   
-    content = contentFile
-    return f"Document traité avec succès. Contenu extrait : {content}..."  # Retourner les 100 premiers caractères
-
-def handle_image(filepath):
-    """Logique pour traiter les images."""
-    return f"Image {os.path.basename(filepath)} traitée avec succès."
-
-def handle_audio(filepath):
-    """Logique pour traiter les fichiers audio."""
-    return f"Fichier audio {os.path.basename(filepath)} traité avec succès."
