@@ -1,24 +1,19 @@
-# Chargement des modèles et des bibliothèques nécessaires
+# Importation des bibliothèques et modules nécessaires
 from langchain_aws import ChatBedrockConverse
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema import StrOutputParser
 from langchain.schema.runnable import Runnable
 from langchain.schema.runnable.config import RunnableConfig
-from typing import List
-import torch
-from typing import cast
-from typing import Optional
+from typing import List, Optional, cast
 import chainlit as cl
 from dotenv import load_dotenv
-
-# Importation de Hugging Face Transformers
 from transformers import AutoModel, AutoTokenizer
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.runnables import RunnablePassthrough
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 import bs4
-
+import textstat  # Pour l'évaluation du niveau de lisibilité
 from langchain.document_loaders import PyMuPDFLoader as PDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
@@ -28,27 +23,23 @@ import urllib
 # Chargement des variables d'environnement
 load_dotenv()
 
-# Chargement des documents web et indexation avec embeddings
+# Chargement des documents PDF et indexation avec embeddings
 def initialize_vectorstore():
-    # Liste des chemins des fichiers PDF
     pdf_files = [
-        "pdf/R-1203-fr.pdf",  # Indiquez le chemin de votre fichier PDF
-        "pdf/e_spirometrie_2017_VF.pdf",  # Ajoutez d'autres fichiers PDF ici
+        "pdf/R-1203-fr.pdf",
+        "pdf/e_spirometrie_2017_VF.pdf",
         "pdf/BreatheEasy-Diagnosis_optimized_FR.pdf"
     ]
     
-    all_docs = []  # Pour stocker tous les documents chargés
-
+    all_docs = []
     for file_path in pdf_files:
         loader = PDFLoader(file_path=file_path)
         docs = loader.load()
-        all_docs.extend(docs)  # Ajouter les documents chargés à la liste
+        all_docs.extend(docs)
 
-    # Diviser les documents en morceaux gérables
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     splits = text_splitter.split_documents(all_docs)
 
-    # Initialiser le modèle SentenceTransformer
     model_name = "all-MiniLM-L6-v2"
     model = SentenceTransformer(model_name)
 
@@ -60,7 +51,6 @@ def initialize_vectorstore():
             return self.embed(documents)
 
         def embed_query(self, query) -> list[float]:
-            print(f"Requête à encoder : '{query}'")  # Débogage
             if isinstance(query, dict):
                 query = query.get('question', '')
             if not query or not query.strip():
@@ -69,30 +59,62 @@ def initialize_vectorstore():
 
     embedding_function = CustomEmbedding()
 
-    # Extraire le texte et créer les embeddings
     texts = [doc.page_content for doc in splits if getattr(doc, 'page_content', '').strip()]
     if not texts:
         raise ValueError("Aucun texte valide à indexer dans le vectorstore.")
 
     embeddings = embedding_function.embed(texts)
 
-    # Créer le vectorstore avec les embeddings et les textes
     vectorstore = Chroma.from_texts(
         texts=texts,
         embedding=embedding_function
     )
     return vectorstore
 
-
 vectorstore = initialize_vectorstore()
 retriever = vectorstore.as_retriever()
 
+# Fonction pour formater les documents
 def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
 
+# Détermine le niveau de complexité du langage de l'utilisateur
+def determine_user_level(text: str) -> str:
+    readability_score = textstat.flesch_reading_ease(text)
+    if readability_score < 50:
+        return "expert"
+    elif readability_score < 70:
+        return "intermediate"
+    else:
+        return "novice"
+
+# Génère un prompt adapté au niveau de l'utilisateur
+def get_custom_prompt(level: str) -> ChatPromptTemplate:
+    if level == "expert":
+        return ChatPromptTemplate.from_messages(
+            [
+                ("system", "Vous êtes un assistant médical spécialisé."),
+                ("human", "{context}\n\n{question}"),
+            ]
+        )
+    elif level == "intermediate":
+        return ChatPromptTemplate.from_messages(
+            [
+                ("system", "Vous êtes un assistant bien informé en santé."),
+                ("human", "Expliquez en termes clairs et concis :\n\n{context}\n\n{question}"),
+            ]
+        )
+    else:
+        return ChatPromptTemplate.from_messages(
+            [
+                ("system", "Vous êtes un assistant accessible et éducatif."),
+                ("human", "Expliquez simplement pour un public général :\n\n{context}\n\n{question}"),
+            ]
+        )
+
+# Fonction de démarrage du chat
 @cl.on_chat_start
 async def on_chat_start():
-    # Initialisation du modèle Bedrock avec configuration pour converser
     llm = ChatBedrockConverse(
         model="anthropic.claude-3-sonnet-20240229-v1:0",
         region_name="us-west-2",
@@ -100,8 +122,8 @@ async def on_chat_start():
         max_tokens=None
     )
 
-    # Prompt pour générer des réponses en utilisant les documents pertinents
-    prompt = ChatPromptTemplate.from_messages(
+    # Prompt de démarrage par défaut
+    default_prompt = ChatPromptTemplate.from_messages(
         [
             (
                 "system",
@@ -111,30 +133,42 @@ async def on_chat_start():
         ]
     )
 
-    # Création de la chaîne RAG
     rag_chain = (
         {"context": retriever | format_docs, "question": RunnablePassthrough()}
-        | prompt
+        | default_prompt
         | llm
         | StrOutputParser()
     )
 
-    # Stockage de la chaîne RAG dans la session utilisateur
     cl.user_session.set("rag_chain", rag_chain)
     await cl.Message(content="Salut ! Comment je peux t'aider aujourd'hui ?").send()
 
+# Fonction pour gérer les messages entrants
 @cl.on_message
 async def on_message(message: cl.Message):
-    # Récupération de la chaîne RAG
-    rag_chain = cast(Runnable, cl.user_session.get("rag_chain"))
-
-    # Vérification pour savoir si c’est un "rick roll"
+    # Détection "rick roll"
     if message.content.lower() == "rick roll":
         elements = [cl.Video(name="rickroll.mp4", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ", display="inline")]
         await cl.Message(content="RICK ROLLED", elements=elements).send()
         return
 
-    # Pour les autres messages
+    # Analyse du niveau lexical de l'utilisateur et création d'un prompt personnalisé
+    user_level = determine_user_level(message.content)
+    custom_prompt = get_custom_prompt(user_level)
+    
+    # Créer la chaîne RAG avec le prompt personnalisé
+    rag_chain = (
+        {"context": retriever | format_docs, "question": RunnablePassthrough()}
+        | custom_prompt
+        | ChatBedrockConverse(
+            model="anthropic.claude-3-sonnet-20240229-v1:0",
+            region_name="us-west-2",
+            temperature=0,
+            max_tokens=None
+        )
+        | StrOutputParser()
+    )
+
     keywords = ["spirométrie", "diagnostic", "respiration", "santé", "asthme"]
     if any(keyword in message.content.lower() for keyword in keywords):
         retrieved_docs = retriever.get_relevant_documents(message.content)
@@ -149,12 +183,9 @@ async def on_message(message: cl.Message):
             await cl.Message(content="Aucun document pertinent trouvé. Réponse basée sur le modèle...").send()
     else:
         response = rag_chain.astream(
-            {"question": f"Répondez à cette question avec vos propres connaissances : {message.content}"},
+            {"question": f"Répondez à cette question en fonction du niveau '{user_level}': {message.content}"},
             config=RunnableConfig(callbacks=[cl.LangchainCallbackHandler()]),
         )
         msg = cl.Message(content="")  # Message pour le streaming
         async for chunk in response:
             await msg.stream_token(chunk)
-
-
-
