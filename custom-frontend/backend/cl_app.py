@@ -16,7 +16,7 @@ from transformers import AutoModel, AutoTokenizer
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.runnables import RunnablePassthrough
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 import bs4
 
 from langchain.document_loaders import PyMuPDFLoader as PDFLoader
@@ -82,8 +82,6 @@ def initialize_vectorstore():
     )
     return vectorstore
 
-
-
 vectorstore = initialize_vectorstore()
 retriever = vectorstore.as_retriever()
 
@@ -133,13 +131,19 @@ async def on_message(message: cl.Message):
     rag_chain = cast(Runnable, cl.user_session.get("rag_chain"))
 
     msg = cl.Message(content="")
-    
-    # Génération de la réponse en utilisant le flux asynchrone
-    async for chunk in rag_chain.astream(
-        {"question": message.content},
-        config=RunnableConfig(callbacks=[cl.LangchainCallbackHandler()]),
-    ):
-        await msg.stream_token(chunk)
+
+    # Logique conditionnelle pour utiliser le retriever
+    if "document" in message.content.lower():  # Condition simple pour déterminer si on utilise le retriever
+        # Génération de la réponse en utilisant le flux asynchrone avec le retriever
+        async for chunk in rag_chain.astream(
+            {"question": message.content},
+            config=RunnableConfig(callbacks=[cl.LangchainCallbackHandler()]),
+        ):
+            await msg.stream_token(chunk)
+    else:
+        # Traitement alternatif si le retriever n'est pas utilisé
+        response = "Je ne vais pas utiliser le retriever pour cette question. Réponse par défaut ou autre traitement."
+        await msg.send(response)
 
     await msg.send()
 
