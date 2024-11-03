@@ -15,6 +15,32 @@ interface Message {
   output: string;
 }
 
+async function uploadFiles() {
+    const form = document.getElementById("uploadForm") as HTMLFormElement;
+    const formData = new FormData(form);
+
+    const response = await fetch("http://localhost:8000/upload", {
+        method: "POST",
+        body: formData,
+    });
+
+    const result = await response.json();
+    document.getElementById("response")!.innerText = JSON.stringify(result, null, 2);
+}
+
+export default function UploadComponent() {
+    return (
+        <div>
+            <form id="uploadForm" encType="multipart/form-data">
+                <input type="file" name="file" multiple />
+                <button type="button" onClick={uploadFiles}>Téléverser</button>
+            </form>
+            <div id="response"></div>
+        </div>
+    );
+}
+
+
 export function Playground() {
   const [inputValue, setInputValue] = useState<string>("");
   const { sendMessage } = useChatInteract();
@@ -115,6 +141,11 @@ export function Playground() {
           </div>
         </div>
         <div className={`border-0 p-4 ${isDarkTheme ? 'bg-gray-800' : 'bg-gray-200'}`}>
+          <form id="uploadForm" encType="multipart/form-data">
+            <input type="file" name="file" multiple/>
+            <button type="button" onClick={uploadFiles}>Téléverser</button>
+          </form>
+          <div id="response"></div>
           <div className="flex items-center space-x-2">
             <Input
                 autoFocus
