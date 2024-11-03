@@ -2,18 +2,20 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from starlette.middleware.cors import CORSMiddleware
 
-from chainlit.auth import create_jwt
-from chainlit.user import User
+from fastapi import UploadFile, File
+from starlette.responses import JSONResponse
+import chainlit as cl
 from chainlit.utils import mount_chainlit
 
 from dotenv import load_dotenv
 import boto3
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 
 from user_routes import user_router
 from message_routes import message_router
 from conversation_routes import conversation_router
+from cl_app import process_file
 
 load_dotenv()
 
@@ -34,10 +36,21 @@ app.add_middleware(
 )
 
 
-@app.get("/custom-auth")
-async def custom_auth( ):
-    token = create_jwt(User(identifier="Test User"))
-    return JSONResponse({"token": token})
+@app.post("/upload")
+async def upload_files(files: list[UploadFile]):
+    max_total_size = 30*1024*1024
+    total_size = sum(file.size for file in files)
+    if total_size > max_total_size:
+        return JSONResponse({"error": "La taille totale des fichiers dépasse la limite de 30 Mo."}, status_code=400)
+
+    responses = []
+    for file in files:
+        content = await file.read()
+        response = process_file(content, file.filename)  # Utilise la fonction pour traiter le fichier
+        responses.append({"file": file.filename, "response": response})
+
+    return JSONResponse(responses)
+
 
 
 class PromptRequest(BaseModel):
