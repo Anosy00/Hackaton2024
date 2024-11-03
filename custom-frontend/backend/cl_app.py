@@ -16,7 +16,7 @@ from transformers import AutoModel, AutoTokenizer
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.runnables import RunnablePassthrough
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 import bs4
 
 from langchain.document_loaders import PyMuPDFLoader as PDFLoader
@@ -82,6 +82,7 @@ def initialize_vectorstore():
     )
     return vectorstore
 
+
 vectorstore = initialize_vectorstore()
 retriever = vectorstore.as_retriever()
 
@@ -129,23 +130,47 @@ async def on_message(message: cl.Message):
 
     # Récupération de la chaîne RAG depuis la session utilisateur
     rag_chain = cast(Runnable, cl.user_session.get("rag_chain"))
-
     msg = cl.Message(content="")
 
-    # Logique conditionnelle pour utiliser le retriever
-    if "document" in message.content.lower():  # Condition simple pour déterminer si on utilise le retriever
-        # Génération de la réponse en utilisant le flux asynchrone avec le retriever
-        async for chunk in rag_chain.astream(
-            {"question": message.content},
-            config=RunnableConfig(callbacks=[cl.LangchainCallbackHandler()]),
-        ):
-            await msg.stream_token(chunk)
+    # Liste de mots-clés pertinents pour les documents
+    keywords = ["spirométrie", "diagnostic", "respiration", "santé", "asthme"]  # Ajustez cette liste selon le contenu de vos documents
+
+    # Vérification de la pertinence de la question
+    if any(keyword in message.content.lower() for keyword in keywords):
+        # Utilisation du retriever pour obtenir les documents pertinents
+        retrieved_docs = retriever.get_relevant_documents(message.content)
+
+        if retrieved_docs:  # Si des documents sont trouvés
+            context = format_docs(retrieved_docs)
+            input_data = {"context": context, "question": message.content}
+            
+            # Génération de la réponse en utilisant le flux asynchrone
+            async for chunk in rag_chain.astream(
+                input_data,
+                config=RunnableConfig(callbacks=[cl.LangchainCallbackHandler()]),
+            ):
+                await msg.stream_token(chunk)
+        else:
+            # Si aucun document n'est trouvé, répondre avec ses propres connaissances
+            response = rag_chain.astream(
+                {"question": f"Répondez à cette question avec vos propres connaissances : {message.content}"},
+                config=RunnableConfig(callbacks=[cl.LangchainCallbackHandler()]),
+            )
+            async for chunk in response:
+                await msg.stream_token(chunk)
     else:
-        # Traitement alternatif si le retriever n'est pas utilisé
-        response = "Je ne vais pas utiliser le retriever pour cette question. Réponse par défaut ou autre traitement."
-        await msg.send(response)
+        # Question non pertinente, réponse avec ses propres connaissances
+        response = rag_chain.astream(
+            {"question": f"Répondez à cette question avec vos propres connaissances : {message.content}"},
+            config=RunnableConfig(callbacks=[cl.LangchainCallbackHandler()]),
+        )
+        async for chunk in response:
+            await msg.stream_token(chunk)
 
     await msg.send()
+
+
+
 
 @cl.password_auth_callback
 def auth_callback(username: str, password: str):
