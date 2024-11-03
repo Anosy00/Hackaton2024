@@ -1,1 +1,0 @@
-export var __USER__: string;

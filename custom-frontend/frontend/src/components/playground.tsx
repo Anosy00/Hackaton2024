@@ -173,9 +173,9 @@ export function Playground() {
   }, [messages]);
 
   return (
-      <div className={`min-h-screen ${isDarkTheme ? 'bg-gray-900' : 'bg-white'} flex flex-col transition-colors duration-300 w-4/5`}>
-        <div className="flex-1 overflow-auto p-6">
-          <div className="h-[800px] overflow-hidden p-6" >
+      <div className={`min-h-screen ${isDarkTheme ? 'bg-gray-900' : 'bg-white'} flex flex-col transition-colors duration-300 w-4/5 overflow-hidden`}>
+        <div className="flex-1 overflow-hidden p-6">
+          <div className="h-[700px] overflow-hidden p-6" >
             <div className="space-y-4">
               {messages.map((msg) => renderMessage(msg))}
               <div ref={messagesEndRef} />
