@@ -7,7 +7,8 @@ from langchain.schema.runnable.config import RunnableConfig
 from typing import List, Optional, cast
 import chainlit as cl
 from dotenv import load_dotenv
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
+from transformers import pipeline  # Pour l'analyse de sentiment
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.runnables import RunnablePassthrough
@@ -22,6 +23,12 @@ import urllib
 
 # Chargement des variables d'environnement
 load_dotenv()
+
+# Chargement des modèles pour l'analyse de sentiment
+sentiment_model_name = "distilbert-base-uncased-finetuned-sst-2-english"
+sentiment_model = AutoModelForSequenceClassification.from_pretrained(sentiment_model_name)
+sentiment_tokenizer = AutoTokenizer.from_pretrained(sentiment_model_name)
+sentiment_analyzer = pipeline("sentiment-analysis", model=sentiment_model, tokenizer=sentiment_tokenizer)
 
 # Chargement des documents PDF et indexation avec embeddings
 def initialize_vectorstore():
@@ -112,6 +119,13 @@ def get_custom_prompt(level: str) -> ChatPromptTemplate:
             ]
         )
 
+# Fonction pour analyser le sentiment d'un message
+def analyze_sentiment(message: str) -> str:
+    result = sentiment_analyzer(message)[0]
+    sentiment = result['label']
+    score = result['score']
+    return f"{sentiment} ({score:.2f})"
+
 # Fonction de démarrage du chat
 @cl.on_chat_start
 async def on_chat_start():
@@ -152,6 +166,9 @@ async def on_message(message: cl.Message):
         await cl.Message(content="RICK ROLLED", elements=elements).send()
         return
 
+    # Analyse du sentiment de l'utilisateur
+    sentiment_result = analyze_sentiment(message.content)
+    
     # Analyse du niveau lexical de l'utilisateur et création d'un prompt personnalisé
     user_level = determine_user_level(message.content)
     custom_prompt = get_custom_prompt(user_level)
@@ -189,3 +206,6 @@ async def on_message(message: cl.Message):
         msg = cl.Message(content="")  # Message pour le streaming
         async for chunk in response:
             await msg.stream_token(chunk)
+
+    # Envoyer une réponse concernant le sentiment analysé
+    await cl.Message(content=f"Analyse du sentiment : {sentiment_result}").send()
